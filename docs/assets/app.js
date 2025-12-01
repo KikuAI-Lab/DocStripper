@@ -3037,21 +3037,6 @@ class App {
       clearBtn.textContent = "Clear list";
       bulkContainer.appendChild(clearBtn);
       clearBtn.addEventListener("click", () => this.clearAll());
-
-      document.addEventListener("keydown", (e) => {
-        const isModifierPressed = e.ctrlKey || e.metaKey;
-        const key = e.key.toLowerCase();
-
-        if (isModifierPressed) {
-          switch (key) {
-            case "d":
-              if (this.clearAll) {
-                e.preventDefault();
-                this.clearBtn.click();
-              }
-          }
-        }
-      });
     }
 
     // Setup download and copy buttons
@@ -3531,6 +3516,10 @@ document.addEventListener("keydown", (e) => {
     case "enter":
       e.preventDefault();
       this.startBtn.click();
+      break;
+    case "d":
+      e.preventDefault();
+      this.clearAll();
       break;
   }
 });
