@@ -14,12 +14,20 @@ import shutil
 from pathlib import Path
 from datetime import datetime
 from hashlib import sha1
-from typing import List, Tuple, Optional
+from typing import List, Tuple, Optional, Set
 
 
 class DocStripper:
     """Main class for document cleaning operations."""
-    
+
+    # Configuration constants
+    REPEATING_HEADER_THRESHOLD = 0.7  # 70% of pages must have same header/footer
+    MIN_HEADER_LENGTH = 8  # Minimum length for repeating header detection
+    MIN_TABLE_CONSECUTIVE_LINES = 3  # Minimum consecutive lines to detect table
+    TABLE_MIN_SPACE_COLUMNS = 2  # Minimum space-separated columns for table detection
+    TABLE_POSITION_TOLERANCE = 2  # Character position tolerance for table column alignment
+    PDF_EXTRACTION_TIMEOUT = 30  # Timeout in seconds for PDF extraction
+
     # Patterns for common headers/footers
     HEADER_PATTERNS = [
         r'^Page\s+\d+\s+of\s+\d+$',
@@ -76,7 +84,7 @@ class DocStripper:
                     ['pdftotext', '-layout', str(file_path), '-'],
                     capture_output=True,
                     text=True,
-                    timeout=30
+                    timeout=self.PDF_EXTRACTION_TIMEOUT
                 )
                 if result.returncode == 0:
                     return result.stdout
@@ -93,25 +101,42 @@ class DocStripper:
         try:
             import xml.etree.ElementTree as ET
             import zipfile
-            
+
             with zipfile.ZipFile(file_path, 'r') as zip_ref:
+                # Security: Validate ZIP file structure to prevent zip slip attacks
+                for zip_info in zip_ref.infolist():
+                    # Check for directory traversal attempts
+                    if zip_info.filename.startswith('/') or '..' in zip_info.filename:
+                        print(f"Warning: Potentially malicious DOCX file {file_path}: "
+                              f"invalid path '{zip_info.filename}'", file=sys.stderr)
+                        return None
+
                 # Read main document XML
                 xml_content = zip_ref.read('word/document.xml')
                 root = ET.fromstring(xml_content)
-                
+
                 # Extract text from all text nodes
                 # DOCX uses namespace, we'll handle it simply
                 ns = {'w': 'http://schemas.openxmlformats.org/wordprocessingml/2006/main'}
                 text_parts = []
-                
+
                 for elem in root.iter():
                     if elem.tag.endswith('}t'):  # text element
                         if elem.text:
                             text_parts.append(elem.text)
-                
+
                 return '\n'.join(text_parts)
+        except zipfile.BadZipFile as e:
+            print(f"Warning: Invalid DOCX file {file_path}: {e}", file=sys.stderr)
+            return None
+        except KeyError as e:
+            print(f"Warning: DOCX file {file_path} missing required component: {e}", file=sys.stderr)
+            return None
+        except ET.ParseError as e:
+            print(f"Warning: Could not parse XML in DOCX {file_path}: {e}", file=sys.stderr)
+            return None
         except Exception as e:
-            print(f"Warning: Could not extract text from DOCX {file_path}: {e}", file=sys.stderr)
+            print(f"Warning: Unexpected error extracting text from DOCX {file_path}: {e}", file=sys.stderr)
             return None
     
     def read_text_file(self, file_path: Path) -> Optional[str]:
@@ -126,10 +151,10 @@ class DocStripper:
                 try:
                     with open(file_path, 'r', encoding='latin-1') as f:
                         return f.read()
-                except Exception as e:
+                except (OSError, IOError) as e:
                     print(f"Error reading {file_path}: {e}", file=sys.stderr)
                     return None
-            except Exception as e:
+            except (OSError, IOError, PermissionError) as e:
                 print(f"Error reading {file_path}: {e}", file=sys.stderr)
                 return None
         
@@ -239,60 +264,58 @@ class DocStripper:
         
         return boundaries
     
-    def detect_repeating_headers_footers(self, text: str, pages: List[int]) -> set:
+    def detect_repeating_headers_footers(self, text: str, pages: List[int]) -> Set[str]:
         """Detect headers/footers that repeat across pages."""
         lines = text.split('\n')
         first_lines = []
         last_lines = []
-        
+
         # Extract first/last non-empty line from each page (skipping known header/footer patterns)
         start_idx = 0
         total_pages = len(pages) + 1  # pages.length boundaries = pages.length + 1 pages
-        
+
         # Need at least 2 pages to detect repeating headers/footers
         if total_pages < 2:
             return set()
-        
+
         for i in range(len(pages) + 1):
             end_idx = pages[i] if i < len(pages) else len(lines)
-            
+
             # Find first non-empty line in this page (skip known header/footer patterns)
             for j in range(start_idx, end_idx):
                 stripped = lines[j].strip()
                 if stripped and not self.is_header_footer(stripped) and not self.is_page_number(stripped):
                     first_lines.append(stripped)
                     break
-            
+
             # Find last non-empty line in this page (skip known header/footer patterns)
             for j in range(end_idx - 1, start_idx - 1, -1):
                 stripped = lines[j].strip()
                 if stripped and not self.is_header_footer(stripped) and not self.is_page_number(stripped):
                     last_lines.append(stripped)
                     break
-            
+
             start_idx = end_idx
-        
+
         # Count frequency of each line
         from collections import Counter
         first_line_counts = Counter(first_lines)
         last_line_counts = Counter(last_lines)
-        
-        # Find lines that appear in >= 70% of pages
-        threshold = max(1, int(total_pages * 0.7))
+
+        # Find lines that appear in threshold % of pages
+        threshold = max(1, int(total_pages * self.REPEATING_HEADER_THRESHOLD))
         to_remove = set()
-        
+
         for line, count in first_line_counts.items():
             # Only remove if it appears frequently AND is not too short (likely content)
-            # Minimum length check: exclude very short lines that might be content
-            # Use length >= 8 to avoid removing common short words like "Content", "Summary", etc.
-            if count >= threshold and len(line) >= 8:
+            if count >= threshold and len(line) >= self.MIN_HEADER_LENGTH:
                 to_remove.add(line)
-        
+
         for line, count in last_line_counts.items():
             # Only remove if it appears frequently AND is not too short (likely content)
-            if count >= threshold and len(line) >= 8:
+            if count >= threshold and len(line) >= self.MIN_HEADER_LENGTH:
                 to_remove.add(line)
-        
+
         return to_remove
     
     def is_list_marker(self, line: str) -> bool:
@@ -307,49 +330,62 @@ class DocStripper:
         return False
     
     def detect_table_block(self, lines: List[str], start_idx: int) -> Tuple[bool, int]:
-        """Detect table-like blocks: ≥3 consecutive lines with ≥2 runs of ≥2 spaces at similar positions."""
+        """
+        Detect table-like blocks based on consistent spacing patterns.
+
+        A table is detected when we find consecutive lines with:
+        - Multiple space-separated columns (runs of 2+ spaces)
+        - Similar column positions across lines (within tolerance)
+        - Minimum number of consecutive matching lines
+
+        Returns: (is_table, end_index)
+        """
         if start_idx >= len(lines) - 2:
             return False, start_idx
-        
+
         check_lines = lines[start_idx:min(start_idx + 10, len(lines))]
         consecutive_table_lines = 0
         space_patterns = []
-        
+
+        # Step 1: Find lines with multiple space columns
         for line in check_lines:
             if not line.strip():
                 break  # Empty line breaks table pattern
-            
-            # Find positions of multiple spaces (≥2 spaces)
+
+            # Find positions of space columns (2+ consecutive spaces)
             matches = []
             for match in re.finditer(r' {2,}', line):
                 matches.append(match.start())
-            
-            if len(matches) >= 2:
+
+            # Line must have minimum number of space columns
+            if len(matches) >= self.TABLE_MIN_SPACE_COLUMNS:
                 space_patterns.append(matches)
                 consecutive_table_lines += 1
             else:
                 break
-        
-        if consecutive_table_lines >= 3:
-            # Check if space positions are similar across lines
+
+        # Step 2: Check if we have enough consecutive lines to be a table
+        if consecutive_table_lines >= self.MIN_TABLE_CONSECUTIVE_LINES:
+            # Step 3: Verify that space positions align across lines
             similar_positions = 0
-            if len(space_patterns) >= 3:
+            if len(space_patterns) >= self.MIN_TABLE_CONSECUTIVE_LINES:
                 first_pattern = space_patterns[0]
                 for i in range(1, len(space_patterns)):
                     pattern = space_patterns[i]
-                    # Check if at least 2 positions match (within ±2 chars)
+                    # Check if minimum number of column positions match (within tolerance)
                     matches = 0
                     for pos in first_pattern:
                         for pos2 in pattern:
-                            if abs(pos - pos2) <= 2:
+                            if abs(pos - pos2) <= self.TABLE_POSITION_TOLERANCE:
                                 matches += 1
                                 break
-                    if matches >= 2:
+                    if matches >= self.TABLE_MIN_SPACE_COLUMNS:
                         similar_positions += 1
-            
-            if similar_positions >= 2:
+
+            # Need at least 2 lines with matching patterns
+            if similar_positions >= self.TABLE_MIN_SPACE_COLUMNS:
                 return True, start_idx + consecutive_table_lines
-        
+
         return False, start_idx
     
     def merge_broken_lines(self, text: str, enabled: bool = False) -> Tuple[str, int]:
@@ -572,7 +608,7 @@ class DocStripper:
                     text = data.decode('utf-8')
                 except UnicodeDecodeError:
                     text = data.decode('latin-1')
-            except Exception as e:
+            except (OSError, IOError) as e:
                 print(f"Error reading stdin: {e}", file=sys.stderr)
                 return False
             if label is None:
@@ -644,7 +680,7 @@ class DocStripper:
                 })
                 
                 print(f"  ✓ Saved (backup: {backup_path.name})")
-            except Exception as e:
+            except (OSError, IOError, PermissionError) as e:
                 print(f"Error writing {file_path}: {e}", file=sys.stderr)
                 return False
         else:
@@ -667,7 +703,7 @@ class DocStripper:
                 try:
                     with open(self.log_file, 'r', encoding='utf-8') as f:
                         log_entries = json.load(f)
-                except:
+                except (OSError, IOError, json.JSONDecodeError):
                     log_entries = []
             
             log_entries.append(log_entry)
@@ -732,7 +768,7 @@ def undo_last_operation():
                         dst.write(src.read())
                     print(f"  ✓ Restored: {file_path}")
                     restored += 1
-                except Exception as e:
+                except (OSError, IOError, PermissionError) as e:
                     print(f"  ✗ Error restoring {file_path}: {e}", file=sys.stderr)
             else:
                 print(f"  ✗ Backup not found: {backup_path}", file=sys.stderr)
@@ -744,8 +780,8 @@ def undo_last_operation():
         
         print(f"\nRestored {restored} file(s).")
         return True
-        
-    except Exception as e:
+
+    except (OSError, IOError, json.JSONDecodeError, KeyError) as e:
         print(f"Error reading log file: {e}", file=sys.stderr)
         return False
 
