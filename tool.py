@@ -27,18 +27,20 @@ class DocStripper:
         r'^Page\s+\d+$',
         r'^Confidential$',
         r'^DRAFT$',
-        r'^CONFIDENTIAL$',
-        r'^Draft$',
         # Compound headers with dashes
         r'^CONFIDENTIAL\s*-\s*INTERNAL\s+USE\s+ONLY$',
-        r'^Confidential\s*-\s*Internal\s+Use\s+Only$',
         r'^DRAFT\s*-\s*NOT\s+FOR\s+DISTRIBUTION$',
-        r'^Draft\s*-\s*Not\s+for\s+Distribution$',
         r'^INTERNAL\s+USE\s+ONLY$',
-        r'^Internal\s+Use\s+Only$',
         r'^FOR\s+INTERNAL\s+USE\s+ONLY$',
         r'^FOR\s+INTERNAL\s+USE$',
     ]
+
+    # Pre-compile combined pattern for performance
+    # Strip ^ and $ from individual patterns and wrap the alternation in ^(?: ... )$
+    _COMBINED_HEADER_PATTERN = re.compile(
+        r'^(?:' + '|'.join(p.strip('^$') for p in HEADER_PATTERNS) + r')$',
+        re.IGNORECASE
+    )
     
     def __init__(self, dry_run: bool = False,
                  merge_lines: bool = True,
@@ -168,10 +170,7 @@ class DocStripper:
     def is_header_footer(self, line: str) -> bool:
         """Check if line matches common header/footer patterns."""
         stripped = line.strip()
-        for pattern in self.HEADER_PATTERNS:
-            if re.match(pattern, stripped, re.IGNORECASE):
-                return True
-        return False
+        return bool(self._COMBINED_HEADER_PATTERN.match(stripped))
     
     def dehyphenate_text(self, text: str) -> Tuple[str, int]:
         """Remove hyphenation across line breaks. Only applies to lowercase continuation."""
