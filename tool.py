@@ -75,6 +75,8 @@ class DocStripper:
             'merged_lines': 0,
         }
         self.undo_data = []
+        # Performance: Cache for table block detection results
+        self._table_cache: dict = {}
     
     def extract_text_from_pdf(self, file_path: Path) -> Optional[str]:
         """Extract text from PDF using pdftotext if available."""
@@ -483,7 +485,7 @@ class DocStripper:
         """Normalize Unicode punctuation to ASCII (limited, only punctuation)."""
         if not enabled or not text:
             return text, False
-        
+
         # Limited Unicode normalization: only common punctuation
         unicode_map = {
             '\u201C': '"',  # Left double quotation mark
@@ -494,17 +496,93 @@ class DocStripper:
             '\u2014': '-',   # Em dash
             '\u2026': '...', # Horizontal ellipsis
         }
-        
+
         normalized = text
         replacements = 0
-        
+
         for unicode_char, ascii_char in unicode_map.items():
             count = normalized.count(unicode_char)
             if count > 0:
                 replacements += count
                 normalized = normalized.replace(unicode_char, ascii_char)
-        
+
         return normalized, replacements > 0
+
+    def _should_skip_line(self, stripped: str, remove_headers: bool,
+                         repeating_headers_footers: Set[str]) -> Tuple[bool, str]:
+        """
+        Check if a line should be skipped during cleaning.
+
+        Returns: (should_skip, reason)
+            should_skip: True if line should be removed
+            reason: One of 'empty', 'punctuation', 'page_number', 'header', 'repeating_header'
+        """
+        # Skip empty or whitespace-only lines
+        if not stripped:
+            return True, 'empty'
+
+        # Skip punctuation-only lines (---, ***, ===, etc.)
+        if self.is_punctuation_only(stripped):
+            return True, 'punctuation'
+
+        if remove_headers:
+            # Skip page numbers
+            if self.is_page_number(stripped):
+                return True, 'page_number'
+
+            # Skip headers/footers
+            if self.is_header_footer(stripped):
+                return True, 'header'
+
+            # Skip repeating headers/footers across pages
+            if stripped in repeating_headers_footers:
+                return True, 'repeating_header'
+
+        return False, ''
+
+    def _filter_lines(self, lines: List[str], remove_headers: bool,
+                      repeating_headers_footers: Set[str]) -> Tuple[List[str], dict]:
+        """
+        Filter lines by removing noise (headers, footers, duplicates, etc.).
+
+        Returns: (cleaned_lines, stats)
+        """
+        cleaned_lines = []
+        prev_line = None
+        stats = {
+            'duplicates_collapsed': 0,
+            'empty_lines_removed': 0,
+            'header_footer_removed': 0,
+            'punctuation_lines_removed': 0,
+            'repeating_headers_footers_removed': 0,
+        }
+
+        for line in lines:
+            stripped = line.strip()
+
+            # Check if line should be skipped
+            should_skip, reason = self._should_skip_line(stripped, remove_headers, repeating_headers_footers)
+
+            if should_skip:
+                if reason == 'empty':
+                    stats['empty_lines_removed'] += 1
+                elif reason == 'punctuation':
+                    stats['punctuation_lines_removed'] += 1
+                elif reason == 'page_number' or reason == 'header':
+                    stats['header_footer_removed'] += 1
+                elif reason == 'repeating_header':
+                    stats['repeating_headers_footers_removed'] += 1
+                continue
+
+            # Skip consecutive duplicates
+            if prev_line is not None and stripped == prev_line.strip():
+                stats['duplicates_collapsed'] += 1
+                continue
+
+            cleaned_lines.append(line)
+            prev_line = line
+
+        return cleaned_lines, stats
 
     def clean_text(self, text: str,
                    merge_lines: bool = False,
@@ -512,84 +590,61 @@ class DocStripper:
                    normalize_unicode: bool = False,
                    dehyphenate: bool = False,
                    remove_headers: bool = True) -> Tuple[str, dict]:
-        """Clean text by removing noise."""
+        """
+        Clean text by removing noise through a multi-stage pipeline.
+
+        Pipeline stages:
+        1. Dehyphenation (optional)
+        2. Line merging (optional)
+        3. Whitespace normalization (optional)
+        4. Unicode normalization (optional)
+        5. Line filtering (remove headers, duplicates, etc.)
+        """
         if not text:
             return "", {}
-        
-        # Apply dehyphenation first (before line-by-line processing)
+
+        # Clear table cache for new document
+        self._table_cache.clear()
+
+        # Stage 1: Apply dehyphenation first (before line-by-line processing)
         dehyphenated_tokens = 0
         if dehyphenate:
             text, dehyphenated_tokens = self.dehyphenate_text(text)
-        
-        # Apply merge broken lines (before whitespace normalization)
+
+        # Stage 2: Apply merge broken lines (before whitespace normalization)
         text, merged_lines_count = self.merge_broken_lines(text, enabled=merge_lines)
-        
-        # Apply whitespace normalization (with table protection)
+
+        # Stage 3: Apply whitespace normalization (with table protection)
         text, normalized_ws = self.normalize_whitespace(text, enabled=normalize_ws, skip_table_blocks=True)
-        
-        # Apply Unicode punctuation normalization (limited, only punctuation)
+
+        # Stage 4: Apply Unicode punctuation normalization (limited, only punctuation)
         text, normalized_unicode = self.normalize_unicode_punctuation(text, enabled=normalize_unicode)
-        
+
+        # Stage 5: Filter lines (remove noise)
         lines = text.split('\n')
-        cleaned_lines = []
-        prev_line = None
-        local_stats = {
-            'lines_removed': 0,
-            'duplicates_collapsed': 0,
-            'empty_lines_removed': 0,
-            'header_footer_removed': 0,
-            'punctuation_lines_removed': 0,
-            'dehyphenated_tokens': dehyphenated_tokens,
-            'repeating_headers_footers_removed': 0,
-            'merged_lines': merged_lines_count,
-        }
-        
+
         # Detect repeating headers/footers across pages
         repeating_headers_footers = set()
         if remove_headers:
             page_boundaries = self.detect_pages(text)
             repeating_headers_footers = self.detect_repeating_headers_footers(text, page_boundaries)
-        
-        for line in lines:
-            original_line = line
-            stripped = line.strip()
-            
-            # Skip empty or whitespace-only lines
-            if not stripped:
-                local_stats['empty_lines_removed'] += 1
-                continue
-            
-            # Skip punctuation-only lines (---, ***, ===, etc.)
-            if self.is_punctuation_only(stripped):
-                local_stats['punctuation_lines_removed'] += 1
-                continue
-            
-            # Skip page numbers
-            if remove_headers and self.is_page_number(stripped):
-                local_stats['header_footer_removed'] += 1
-                continue
-            
-            # Skip headers/footers
-            if remove_headers and self.is_header_footer(stripped):
-                local_stats['header_footer_removed'] += 1
-                continue
-            
-            # Skip repeating headers/footers across pages
-            if remove_headers and stripped in repeating_headers_footers:
-                local_stats['repeating_headers_footers_removed'] += 1
-                continue
-            
-            # Skip consecutive duplicates
-            if prev_line is not None and stripped == prev_line.strip():
-                local_stats['duplicates_collapsed'] += 1
-                continue
-            
-            cleaned_lines.append(line)
-            prev_line = line
-        
+
+        # Filter lines and collect statistics
+        cleaned_lines, filter_stats = self._filter_lines(lines, remove_headers, repeating_headers_footers)
+
+        # Combine all statistics
+        local_stats = {
+            'lines_removed': len(lines) - len(cleaned_lines),
+            'duplicates_collapsed': filter_stats['duplicates_collapsed'],
+            'empty_lines_removed': filter_stats['empty_lines_removed'],
+            'header_footer_removed': filter_stats['header_footer_removed'],
+            'punctuation_lines_removed': filter_stats['punctuation_lines_removed'],
+            'dehyphenated_tokens': dehyphenated_tokens,
+            'repeating_headers_footers_removed': filter_stats['repeating_headers_footers_removed'],
+            'merged_lines': merged_lines_count,
+        }
+
         cleaned_text = '\n'.join(cleaned_lines)
-        local_stats['lines_removed'] = len(lines) - len(cleaned_lines)
-        
         return cleaned_text, local_stats
     
     def process_file(self, file_path: Path, label: Optional[str] = None) -> bool:
