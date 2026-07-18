@@ -35,7 +35,7 @@ docstripper document.txt
 
 ```bash
 # Clone repository
-git clone https://github.com/kiku-jw/DocStripper.git
+git clone https://github.com/KikuAI-Lab/DocStripper.git
 cd DocStripper
 
 # Make executable (optional, for direct usage)
