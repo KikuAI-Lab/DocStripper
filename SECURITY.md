@@ -1,37 +1,34 @@
-# Security Policy
+# Security policy
 
-## Supported Versions
+## Supported versions
 
-We provide security updates for the following versions:
+Security fixes are applied to the latest revision on the default branch. Older
+commits, tags, packages, and copied browser deployments are not guaranteed to
+receive backports.
 
-| Version | Supported          |
-| ------- | ------------------ |
-| 1.0.x   | :white_check_mark: |
+## Reporting a vulnerability
 
-## Reporting a Vulnerability
+Do not open a public issue for a suspected vulnerability.
 
-If you discover a security vulnerability, please **DO NOT** open a public issue.
+Use GitHub's private vulnerability reporting flow from this repository's
+**Security** tab when it is available. Otherwise email
+[hi@kikuai.dev](mailto:hi@kikuai.dev) with the subject
+`[SECURITY] DocStripper`.
 
-Instead, please email security concerns to the repository maintainer or create a private security advisory.
+Include, when possible:
 
-Please include:
-- Description of the vulnerability
-- Steps to reproduce
-- Potential impact
-- Suggested fix (if applicable)
+- the affected component, version, or commit;
+- a minimal safe reproduction;
+- the expected security impact;
+- relevant logs or screenshots with secrets and personal data removed;
+- a remediation idea, if one has been tested.
 
-We will respond within 48 hours and work with you to address the issue.
+Please allow time for validation and a coordinated fix before publishing
+details.
 
-## Security Best Practices
+## Scope
 
-DocStripper processes files locally and:
-- ✅ Does not send data to external servers
-- ✅ Works completely offline
-- ✅ Creates backup files before modifications
-- ✅ Provides undo functionality
-
-However, always:
-- Review files before processing
-- Keep backups of important documents
-- Test on copies before processing originals
-
+DocStripper is designed to process documents locally. Reports about unsafe file
+handling, path access, dependency compromise, unintended network disclosure,
+or browser and CLI data-boundary failures are welcome. Do not submit real
+confidential documents as test material.
