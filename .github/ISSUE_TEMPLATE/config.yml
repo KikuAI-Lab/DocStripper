@@ -1,10 +1,10 @@
 blank_issues_enabled: true
 contact_links:
   - name: 💬 Discussions
-    url: https://github.com/kiku-jw/DocStripper/discussions
+    url: https://github.com/KikuAI-Lab/DocStripper/discussions
     about: Ask questions or discuss ideas with the community
   - name: 📖 Documentation
-    url: https://github.com/kiku-jw/DocStripper/wiki
+    url: https://github.com/KikuAI-Lab/DocStripper/wiki
     about: Check out our Wiki for detailed documentation
   - name: 🌐 Product Hunt
     url: https://www.producthunt.com/products/docstripper
