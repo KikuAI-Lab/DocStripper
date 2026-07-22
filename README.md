@@ -241,7 +241,7 @@ Support this project and help keep it free:
 
 ## 🔗 Connect
 
-- 📰 **Blog & Updates**: [t.me/kiku_AI](https://t.me/kiku_AI)
+- 📰 **Blog & Updates**: [t.me/kiku_ai](https://t.me/kiku_ai)
 - 💬 **Discord**: [discord.gg/4Kxs97JvsU](https://discord.gg/4Kxs97JvsU)
 - 💼 **LinkedIn**: [linkedin.com/in/kiku-jw](https://www.linkedin.com/in/kiku-jw/)
 - 🌐 **About.me**: [about.me/kiku_jw](https://about.me/kiku_jw)
