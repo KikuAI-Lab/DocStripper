@@ -10,7 +10,7 @@
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE.txt)
 [![Product Hunt](https://img.shields.io/badge/Product%20Hunt-Featured-orange)](https://www.producthunt.com/products/docstripper)
 
-**DocStripper** automatically removes noise from text documents. Remove page numbers, headers/footers, duplicate lines, and empty lines from `.txt`, `.docx`, and `.pdf` files. Choose between **Fast Clean** (instant) or **Smart Clean** (AI-powered). Works entirely in your browser - 100% private, no uploads, no sign-ups.
+**DocStripper** automatically removes noise from text documents. Remove page numbers, headers/footers, duplicate lines, and empty lines from `.txt`, `.docx`, and `.pdf` files. Choose between **Fast Clean** (instant) or **Smart Clean** (AI-powered). In the web app, DocStripper processes selected document files in your browser and does not upload their contents. The page still makes network requests for third-party resources, analytics, translation, and Smart Clean model downloads. No account is required.
 
 **🌐 [Try it online →](https://kikuai-lab.github.io/DocStripper/)** — No installation needed!
 
@@ -26,8 +26,7 @@
 - ⚙️ **WebWorker Processing** — Large files processed in background (no UI freezing)
 - 🔄 **Side-by-Side Preview** — Compare Original | Cleaned
 - 💾 **Settings Persistence** — Your preferences are saved automatically
-- 🔒 **100% Private** — All processing happens in your browser, works completely offline
-- 📡 **Works Offline Badge** — Visual indicator that everything stays on your device
+- 🔒 **Local File Processing** — DocStripper processes selected files in the browser and does not upload their contents
 - 📊 **Real-time Statistics** — See exactly what was removed
 - 📥 **Batch Download (ZIP)** — Download multiple cleaned files at once
 - 🎨 **Dark Theme** — Toggle between light and dark themes
@@ -50,20 +49,14 @@
 
 #### Installation Options
 
-**Option 1: PyPI (Recommended)**
+**Option 1: Homebrew (macOS)**
 ```bash
-pip install docstripper
-docstripper document.txt
-```
-
-**Option 2: Homebrew (macOS)**
-```bash
-brew tap kiku-jw/docstripper
+brew tap KikuAI-Lab/docstripper
 brew install docstripper
 docstripper document.txt
 ```
 
-**Option 3: Manual Installation**
+**Option 2: Manual Installation**
 ```bash
 git clone https://github.com/KikuAI-Lab/DocStripper.git
 cd DocStripper
@@ -118,7 +111,6 @@ Important content here.
 Executive Summary
 This is automatic text processing.
 Important content here.
-More content.
 ```
 
 **Key Changes:**
@@ -199,7 +191,8 @@ More content.
 ### Web App
 - Modern web browser (Chrome, Firefox, Safari, Edge)
 - No installation or dependencies required
-- Works completely offline after first load
+- DocStripper does not upload selected document files
+- Network access is used for page resources and Smart Clean model downloads
 
 ### CLI Tool
 - **Python 3.9+** (for CLI tool)

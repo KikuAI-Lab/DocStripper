@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "docstripper"
 version = "2.1.0"
-description = "AI-powered batch document cleaner - Remove noise from text documents automatically"
+description = "Batch document cleaner - Remove noise from text documents automatically"
 readme = "README.md"
 requires-python = ">=3.9"
 license = {text = "MIT"}

@@ -1,22 +1,11 @@
 # Installation Guide
 
-## PyPI Installation
-
-```bash
-pip install docstripper
-```
-
-After installation, use:
-```bash
-docstripper document.txt
-```
-
 ## Homebrew Installation
 
 **Recommended: Install from Tap**
 
 ```bash
-brew tap kiku-jw/docstripper
+brew tap KikuAI-Lab/docstripper
 brew install docstripper
 ```
 

@@ -12,7 +12,10 @@ Yes! DocStripper is completely free and open-source (MIT License).
 
 ### Is my data private?
 
-**Absolutely!** All processing happens entirely in your browser (web app) or on your computer (CLI). Your files never leave your device - no uploads, no server-side processing.
+The web app processes selected document files in your browser and does not
+upload their contents. The page still makes network requests for third-party
+resources, analytics, translation, and Smart Clean model downloads. The CLI
+processes files on your computer.
 
 ### What file formats are supported?
 
@@ -43,7 +46,9 @@ Smart Clean downloads a small AI model (~100-200 MB) to run locally in your brow
 
 ### Can I use Smart Clean offline?
 
-Yes! After the initial download, Smart Clean works completely offline.
+The model can be reused from the browser cache after its initial download.
+Offline availability also depends on whether the browser has cached the page
+and its required resources, so it is not guaranteed.
 
 ### What if WebGPU is not available?
 

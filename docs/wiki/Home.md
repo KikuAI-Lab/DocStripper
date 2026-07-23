@@ -63,7 +63,10 @@ All default features plus:
 
 ## 🔒 Privacy
 
-100% private - All processing happens in your browser. Files never leave your computer.
+The web app processes selected document files in your browser and does not
+upload their contents. The page still makes network requests for third-party
+resources, analytics, translation, and Smart Clean model downloads. The CLI
+processes files on your computer.
 
 ## 📚 Documentation
 
@@ -75,4 +78,3 @@ All default features plus:
 ## 📝 License
 
 MIT License - See [LICENSE.txt](https://github.com/KikuAI-Lab/DocStripper/blob/main/LICENSE.txt)
-
