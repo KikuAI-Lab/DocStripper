@@ -1,9 +1,9 @@
 # Homebrew formula for DocStripper
 # To install: brew install --build-from-source docstripper.rb
-# Or add this tap first: brew tap kiku-jw/docstripper
+# Or add this tap first: brew tap KikuAI-Lab/docstripper
 
 class Docstripper < Formula
-  desc "AI-powered batch document cleaner - Remove noise from text documents automatically"
+  desc "Batch document cleaner - Remove noise from text documents automatically"
   homepage "https://github.com/KikuAI-Lab/DocStripper"
   url "https://github.com/KikuAI-Lab/DocStripper/archive/refs/tags/v2.1.0.tar.gz"
   version "2.1.0"

@@ -4,26 +4,26 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>DocStripper - Batch Document Cleaner</title>
-    <meta name="description" content="DocStripper - AI-powered batch document cleaner. Remove page numbers, headers, footers, duplicates, and empty lines automatically. Fast Clean (instant) or Smart Clean (AI-powered with on-device LLM). Works entirely in your browser - 100% private, no uploads.">
+    <meta name="description" content="DocStripper batch document cleaner. Remove page numbers, headers, footers, duplicates, and empty lines with Fast Clean or Smart Clean. Document files are processed in the browser and are not uploaded by DocStripper.">
     <meta name="keywords" content="document cleaner, text cleaner, remove page numbers, clean documents, text processing, document processing, AI document cleaner, batch document cleaner, remove headers footers, clean text files, docx cleaner, txt cleaner">
     
     <!-- Open Graph / Facebook -->
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://kikuai-lab.github.io/DocStripper/">
     <meta property="og:title" content="DocStripper - Batch Document Cleaner">
-    <meta property="og:description" content="AI-powered batch document cleaner. Remove page numbers, headers, footers, duplicates, and empty lines automatically. Fast Clean (instant) or Smart Clean (AI-powered). Works entirely in your browser - 100% private.">
+    <meta property="og:description" content="Remove page numbers, headers, footers, duplicates, and empty lines with Fast Clean or Smart Clean. Document files are processed in the browser and are not uploaded by DocStripper.">
     
     <!-- Twitter -->
-    <meta property="twitter:card" content="summary_large_image">
+    <meta property="twitter:card" content="summary">
     <meta property="twitter:url" content="https://kikuai-lab.github.io/DocStripper/">
     <meta property="twitter:title" content="DocStripper - Batch Document Cleaner">
-    <meta property="twitter:description" content="AI-powered batch document cleaner. Remove page numbers, headers, footers, duplicates, and empty lines automatically. Fast Clean (instant) or Smart Clean (AI-powered). Works entirely in your browser - 100% private.">
+    <meta property="twitter:description" content="Remove page numbers, headers, footers, duplicates, and empty lines with Fast Clean or Smart Clean. Document files are processed in the browser and are not uploaded by DocStripper.">
     
     <!-- Canonical URL -->
     <link rel="canonical" href="https://kikuai-lab.github.io/DocStripper/">
     
     <!-- Sitemap -->
-    <link rel="sitemap" type="application/xml" href="/sitemap.xml">
+    <link rel="sitemap" type="application/xml" href="/DocStripper/sitemap.xml">
     
     <!-- Structured Data for SEO -->
     <script type="application/ld+json">
@@ -31,7 +31,7 @@
       "@context": "https://schema.org",
       "@type": "WebApplication",
       "name": "DocStripper",
-      "description": "AI-powered batch document cleaner. Remove noise from text documents automatically - page numbers, headers, footers, duplicates, and empty lines. Works entirely in your browser - 100% private.",
+      "description": "Batch document cleaner that removes page numbers, headers, footers, duplicates, and empty lines. Document files are processed in the browser and are not uploaded by DocStripper.",
       "url": "https://kikuai-lab.github.io/DocStripper/",
       "applicationCategory": "UtilityApplication",
       "operatingSystem": "Any",
@@ -47,8 +47,8 @@
         "Remove headers and footers",
         "Remove duplicate lines",
         "Remove empty lines",
-        "100% private - no uploads",
-        "Works offline",
+        "Processes selected document files in the browser",
+        "Does not upload selected document files",
                         "Supports .txt, .docx, and .pdf files"
       ],
       "browserRequirements": "Requires JavaScript. Requires HTML5.",
@@ -113,7 +113,7 @@
                 <div class="upload-card">
                     <h2>Upload Your Documents</h2>
                     <p class="upload-description">
-                        Drop your files here or click to browse. All processing happens in your browser — your files never leave your computer!
+                        Drop your files here or click to browse. DocStripper processes selected document files in your browser and does not upload their contents.
                     </p>
                     
                     <!-- First-visit privacy tooltip -->
@@ -121,7 +121,7 @@
                         <div class="tooltip-content">
                             <div class="tooltip-icon">🔒</div>
                             <div class="tooltip-text">
-                                <strong>100% Private</strong> — Everything works offline, nothing is sent to any server. Your files stay on your device.
+                                <strong>Local file processing</strong> — DocStripper does not upload your selected document files. The page still uses network requests for third-party resources, analytics, translation, and Smart Clean model downloads.
                             </div>
                             <button class="tooltip-close" id="closeTooltip" aria-label="Close">×</button>
                         </div>
@@ -173,8 +173,8 @@
                                 <ul>
                                     <li>One-time download of ~100-200 MB (model weights)</li>
                                     <li>WebGPU support (most modern browsers)</li>
-                                    <li>Works offline after first load</li>
-                                    <li>Files never leave your browser</li>
+                                    <li>Model files are downloaded and cached by the browser</li>
+                                    <li>Selected document files are not uploaded by DocStripper</li>
                                 </ul>
                                 <p class="warning-note"><strong>Note:</strong> Cleaning options below customize the AI's behavior. Unchecked options will be preserved in the output.</p>
                                 <p class="warning-note">If WebGPU is unavailable, Fast Clean will be used automatically.</p>
@@ -329,8 +329,8 @@
                     </div>
                     <div class="feature-card">
                         <div class="feature-icon">🔒</div>
-                        <h3>100% Private</h3>
-                        <p>All processing happens in your browser - files never leave your computer</p>
+                        <h3>Local File Processing</h3>
+                        <p>DocStripper processes selected files in your browser without uploading their contents</p>
                     </div>
                     <div class="feature-card">
                         <div class="feature-icon">📊</div>
@@ -400,20 +400,6 @@ Main content starts here.
 Empty line above.</code></pre>
                     </div>
                 </div>
-                <div class="demo-stats">
-                    <div class="stat">
-                        <span class="stat-number">25</span>
-                        <span class="stat-label">Lines Removed</span>
-                    </div>
-                    <div class="stat">
-                        <span class="stat-number">7</span>
-                        <span class="stat-label">Duplicates Collapsed</span>
-                    </div>
-                    <div class="stat">
-                        <span class="stat-number">15</span>
-                        <span class="stat-label">Headers/Footers Removed</span>
-                    </div>
-                </div>
             </div>
         </section>
 
@@ -421,7 +407,7 @@ Empty line above.</code></pre>
         <section class="cli-section">
             <div class="container">
                 <h2>Prefer Command Line?</h2>
-                <p>You can also use DocStripper as a CLI tool. Check out our <a href="https://github.com/KikuAI-Lab/DocStripper#installation" target="_blank">GitHub repository</a> for installation instructions.</p>
+                <p>You can also use DocStripper as a CLI tool. Check out our <a href="https://github.com/KikuAI-Lab/DocStripper#installation-options" target="_blank">GitHub repository</a> for installation instructions.</p>
             </div>
         </section>
 
@@ -467,7 +453,7 @@ Empty line above.</code></pre>
                     </div>
 
                     <div class="how-it-works-note">
-                        <p><strong>🔒 Privacy First:</strong> All processing happens entirely in your browser. Your files never leave your computer — no uploads, no server-side processing, complete privacy.</p>
+                        <p><strong>🔒 Local file processing:</strong> DocStripper reads and cleans selected document files in your browser and does not upload their contents. The page itself still loads third-party resources and analytics.</p>
                     </div>
                 </div>
             </div>

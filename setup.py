@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Setup script for DocStripper PyPI package
+Legacy setuptools entry point for DocStripper
 """
 from setuptools import setup
 from pathlib import Path
@@ -31,7 +31,7 @@ setup(
     version=version,
     author="Kiku",
     author_email="",  # Add email if needed
-    description="AI-powered batch document cleaner - Remove noise from text documents automatically",
+    description="Batch document cleaner - Remove noise from text documents automatically",
     long_description=long_description,
     long_description_content_type="text/markdown",
     url="https://github.com/KikuAI-Lab/DocStripper",
