@@ -3,14 +3,16 @@
   
   # 🧹 DocStripper
   
-  > **AI-powered batch document cleaner** — Remove noise from text documents automatically
+  > **Batch document cleaner for TXT, DOCX and PDF text** — Rule-based cleanup with an optional browser AI mode
 </div>
 
 [![Python Version](https://img.shields.io/badge/python-3.9%2B-blue.svg)](https://www.python.org/downloads/)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE.txt)
 [![Product Hunt](https://img.shields.io/badge/Product%20Hunt-Featured-orange)](https://www.producthunt.com/products/docstripper)
 
-**DocStripper** automatically removes noise from text documents. Remove page numbers, headers/footers, duplicate lines, and empty lines from `.txt`, `.docx`, and `.pdf` files. Choose between **Fast Clean** (instant) or **Smart Clean** (AI-powered). In the web app, DocStripper processes selected document files in your browser and does not upload their contents. The page still makes network requests for third-party resources, analytics, translation, and Smart Clean model downloads. No account is required.
+**DocStripper** removes common text noise such as page numbers, headers/footers, duplicate lines, and empty lines. The browser app offers rule-based **Fast Clean** and optional **Smart Clean (Beta)** with an on-device model; the Python CLI uses rule-based text processing. DOCX and PDF support means text extraction, not preservation of the original document layout.
+
+In the web app, DocStripper processes selected document files in your browser and does not upload their contents. The page still makes network requests for third-party resources, analytics, translation, and Smart Clean model downloads. No account is required.
 
 **🌐 [Try it online →](https://kikuai-lab.github.io/DocStripper/)** — No installation needed!
 
@@ -39,13 +41,19 @@
 ### Web App (Recommended)
 
 1. Visit [https://kikuai-lab.github.io/DocStripper/](https://kikuai-lab.github.io/DocStripper/)
-2. Upload your files
-3. Choose **Fast Clean** (instant) or **Smart Clean** (AI-powered)
+2. Choose your local files
+3. Choose **Fast Clean** (rule-based) or **Smart Clean (Beta)** (AI-powered)
 4. Adjust **Cleaning Temperament** slider: Gentle (recommended), Moderate, Thorough, or Aggressive
 5. Click "Start Cleaning"
-6. Download or copy the cleaned results
+6. Review the preview, then download or copy the cleaned results
 
 ### CLI Tool
+
+> [!WARNING]
+> Start with `--dry-run` and copies of your files. Without `--dry-run` or
+> `--stdout`, the current CLI writes cleaned **plain text back to the input
+> path**, including a `.docx` or `.pdf` path. It does not rebuild those document
+> formats. Do not use in-place cleaning on original DOCX/PDF files.
 
 #### Installation Options
 
@@ -53,39 +61,46 @@
 ```bash
 brew tap KikuAI-Lab/docstripper
 brew install docstripper
-docstripper document.txt
+docstripper --dry-run document.txt
 ```
 
 **Option 2: Manual Installation**
 ```bash
 git clone https://github.com/KikuAI-Lab/DocStripper.git
 cd DocStripper
-python tool.py document.txt
+python3 tool.py --dry-run document.txt
 ```
 
-See [INSTALL.md](INSTALL.md) for detailed installation instructions.
+Replace `document.txt` with a copy of an existing local file. See
+[INSTALL.md](INSTALL.md) for detailed installation instructions. CLI PDF text
+extraction requires `pdftotext`; see [Supported Formats](#️-supported-formats).
 
 #### Usage
 
 ```bash
-# Clean a file
-python tool.py document.txt
+# Preview changes without modifying the input
+python3 tool.py --dry-run document.txt
 
-# Clean multiple files
-python tool.py file1.txt file2.txt file3.docx
+# Preview multiple inputs without overwriting their formats
+python3 tool.py --dry-run file1.txt file2.txt file3.docx
 
-# Preview changes (dry-run)
-python tool.py --dry-run document.txt
+# Inspect PDF text in the terminal without modifying the source PDF
+python3 tool.py --keep-headers input.pdf --stdout
 
-# Undo last operation
-python tool.py --undo
- 
-# Pipe stdin to stdout (no file writes)
-cat input.pdf | python tool.py - --stdout > output.txt
+# Only after reviewing: clean a disposable plain-text copy in place
+python3 tool.py document-copy.txt
 
-# Keep headers/footers if needed
-python tool.py --keep-headers input.pdf --stdout
+# Attempt to restore the last logged in-place operation from its backup
+python3 tool.py --undo
 ```
+
+**Current CLI I/O limitations:** `--stdout` avoids modifying the input, but
+progress messages, separators, and statistics also go to stdout. Do not treat
+redirected output as a clean machine-readable transcript. The CLI entry point
+currently checks `-` as a filesystem path, so piped stdin is not a working
+entry point; pass an existing filename instead. Piping raw PDF bytes would not
+perform PDF extraction either. These are implementation limitations, not
+features fixed by this documentation.
 
 ---
 
@@ -162,7 +177,7 @@ Important content here.
 - `--no-normalize-ws` — disable whitespace normalization
 - `--no-normalize-unicode` — disable Unicode punctuation normalization
 - `--keep-headers` — keep headers/footers/page numbers
-- `--stdout` — write cleaned text to stdout instead of modifying files (supports `-` for stdin)
+- `--stdout` — print cleaned text without modifying the input; currently also includes diagnostics (see CLI I/O limitations above)
 
 **Protection Features:**
 - ✅ Lists are never merged or broken
@@ -176,8 +191,8 @@ Important content here.
 | Format | Status | Notes |
 |--------|--------|-------|
 | `.txt` | ✅ Full | UTF-8, Latin-1 |
-| `.docx` | ✅ Basic | Text extraction only (Web + CLI) |
-| `.pdf` | ✅ Basic | Text extraction only (Web + CLI). Web uses PDF.js automatically. CLI requires `pdftotext` (poppler-utils) |
+| `.docx` | ✅ Basic | Text extraction only (Web + CLI); use a non-writing CLI mode to preserve the source document |
+| `.pdf` | ✅ Basic | Text extraction only (Web + CLI). Web uses PDF.js automatically. CLI requires `pdftotext` (poppler-utils); use a non-writing CLI mode to preserve the source document |
 
 **PDF Support:**
 - macOS: `brew install poppler`
