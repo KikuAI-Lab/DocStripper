@@ -28,9 +28,9 @@
 
 ### Web App
 1. Visit https://kikuai-lab.github.io/DocStripper/
-2. Upload your files (.txt, .docx, .pdf)
+2. Choose your local files (.txt, .docx, .pdf)
 3. Click "Start Cleaning"
-4. Download or copy results
+4. Review the preview, then download or copy results
 
 ### CLI
 ```bash
@@ -38,12 +38,20 @@
 git clone https://github.com/KikuAI-Lab/DocStripper.git
 cd DocStripper
 
-# Clean a file
-python tool.py document.txt
+# Preview an existing file without modifying it
+python3 tool.py --dry-run document.txt
 
-# Pipe stdin to stdout
-cat file.pdf | python tool.py - --stdout > clean.txt
+# Inspect extracted PDF text in the terminal; requires pdftotext
+python3 tool.py file.pdf --stdout
 ```
+
+Use copies and start with `--dry-run`. The current CLI otherwise writes plain
+text back to the input path, including DOCX/PDF paths; it does not reconstruct
+those formats. `--stdout` preserves the input but also prints diagnostics, so
+it is not a clean machine-readable export. The current entry point does not
+support normal piped stdin via `-`. Pass a filename instead, and do not pipe
+raw PDF bytes into a text-cleaning command. See the
+[README CLI safety notes](https://github.com/KikuAI-Lab/DocStripper#cli-tool).
 
 ## 📖 What Gets Removed?
 
